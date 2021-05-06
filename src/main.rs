@@ -7,7 +7,7 @@ fn main() {
     let app = read_args();
     let root_path = PathBuf::from(app.value_of("Output").unwrap_or("./"));
     let config = app.value_of("config").unwrap_or("");
-    let code_file_name = app.value_of("Input").unwrap_or_else(|| panic!(""));
+    let code_file_name = app.value_of("Input").unwrap();
 
     // just checking
     print!(
