@@ -1,4 +1,7 @@
+mod commands;
+
 use clap::{App, Arg, ArgMatches};
+use commands::*;
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::PathBuf;
@@ -14,6 +17,15 @@ fn main() {
         "root_path = {:?}, config = {}, code_file_name = {}",
         root_path, config, code_file_name
     );
+
+    // TODO
+    // parse and take commands
+    // // if Input starts_with "./"
+    // // else fetch from BOILERPLATES
+    // // else search look in path and if not available throw error.
+    // save commands at BOILERPLATES or ~/.local/boilerplates/
+    // // if new and not available.
+    // run commands
 }
 
 fn read_args<'a>() -> ArgMatches<'a> {
