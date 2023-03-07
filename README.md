@@ -70,40 +70,38 @@ One thing to consider is that, every block will have a name and will be followed
 
 ## Example Code:
 
-```python
-    $projectfolder:'_P';
-        $src:'src';
-            #main:'main.rs';
-                @inputm;
-                    '
-                    macro_rules! input {
-                        ($t:tt) => {{
-                            let mut temp = String::new();
-                            std::io::stdin().read_line(&mut temp);
-                            temp.split_whitespace().parse::<$t>().unwrap() 
-                        }}
-                    }
-                    '
-                @mainfn;
-                    'fn main() {
-                        unimplemented!();
-                    }'
+```rust
+$projectfolder:_P;
+    $src:src;
+        #main:main.rs;
+            @inputm;
+                macro_rules! input {
+                    ($t:tt) => {{
+                        let mut temp = String::new();
+                        std::io::stdin().read_line(&mut temp);
+                        temp.split_whitespace().parse::<$t>().unwrap() 
+                    }}
+                }
+            !
+            @mainfn;
+                fn main() {
+                    unimplemented!();
+                }
             !
         !
-        
-        #toml:'Cargo.toml';
-            @package;
-            '
-            [package]
-            name = "_P"
-            version = "0.1.0"
-            authors = ["_user _email"]
-            edition = "2018"
-            '
-            @dependecies;
-            '
-            [dependecies]
-            '
+    !
+    
+    #toml:Cargo.toml;
+        @package;
+        [package]
+        name = "_P"
+        version = "0.1.0"
+        authors = ["_user _email"]
+        edition = "2018"
+        !
+        @dependecies;
+        [dependecies]
         !
     !
+!
 ```

@@ -1,72 +1,87 @@
-mod commands;
+mod parser;
 
-use clap::{App, Arg, ArgMatches};
-use commands::*;
-use std::fs::File;
-use std::io::prelude::*;
-use std::path::PathBuf;
+use clap::Parser as ClapParser;
+use std::{
+    collections::HashMap,
+    fs::File,
+    io::BufReader,
+    path::{Path, PathBuf},
+    rc::Rc,
+};
 
-fn main() {
-    let app = read_args();
-    let root_path = PathBuf::from(app.value_of("Output").unwrap_or("./"));
-    let config = app.value_of("config").unwrap_or("");
-    let code_file_name = app.value_of("Input").unwrap();
+use crate::parser::LineParser;
 
-    // just checking
-    print!(
-        "root_path = {:?}, config = {}, code_file_name = {}",
-        root_path, config, code_file_name
-    );
-
-    // TODO
-    // parse and take commands
-    // // if Input starts_with "./"
-    // // else fetch from BOILERPLATES
-    // // else search look in path and if not available throw error.
-    // save commands at BOILERPLATES or ~/.local/boilerplates/
-    // // if new and not available.
-    // run commands
+#[derive(ClapParser, Debug)]
+#[command(author = "hem1t <sunny10fb@gmail.com>",
+          version=  "0.1.0",
+          about = "choose a Boilerplate, can define new ones in ~/.config/boilerplate folder.",
+          long_about = None)]
+struct Options {
+    /// choose a Boilerplate, can define new ones in ~/.config/boilerplate folder.
+    #[arg(value_name = "FILE")]
+    input: String,
+    /// path to create the stuffs.
+    #[arg(short, long)]
+    output: PathBuf,
+    /// config name to be aplied.
+    #[arg(short, long)]
+    config: String,
+    /// will print more info.
+    #[arg(short, long, default_value_t = false)]
+    verbosity: bool,
+    /// save the boilerplate.
+    #[arg(short, long, default_value_t = false)]
+    save: bool,
+    /// vars
+    #[arg(long)]
+    vars: String,
 }
 
-fn read_args<'a>() -> ArgMatches<'a> {
-    let app = App::new("Boilerplate")
-        .version("0.1.0")
-        .author("hem1t <sunny10fb@gmail.com>")
-        .about("")
-        // command.file file to read code from
-        .arg(
-            Arg::with_name("Input")
-                .index(1)
-                .required(true)
-                .help("choose a Boilerplate, can define new ones in ~/.config/boilerplate folder."),
-        )
-        // command.output
-        .arg(
-            Arg::with_name("Output")
-                .short("o")
-                .long("output")
-                .help("path to create the stuffs.")
-                .takes_value(true),
-        )
-        // command.config
-        .arg(
-            Arg::with_name("config")
-                .short("c")
-                .long("config")
-                .help("config name to be aplied.")
-                .takes_value(true),
-        )
-        // command.verbosity
-        // .arg(Arg::with_name("verbosity")
-        //      .short("v")
-        //      .help("will print more info.")
-        // )
-        // command.debug
-        .arg(
-            Arg::with_name("debug")
-                .short("d")
-                .help("logs the details and stores temporarily in ~/.config/boilerplate/.log"),
-        )
-        .get_matches();
-    app
+fn main() {
+    let app = Options::parse();
+    let _root_path = app.output;
+    let _config = app.config;
+    let _code_file_name = app.input;
+
+    let vars: HashMap<&str, Rc<String>> = get_vars(&app.vars);
+
+    println!("{:?}", _code_file_name);
+
+    let file = open_file(&_code_file_name);
+    println!("{:?}", file);
+
+    println!("{:?}", vars);
+    let lines = LineParser::new().parse(file).ok();
+    println!("{:?}", lines);
+    Validator::validate()
+}
+
+fn get_vars(var_string: &String) -> HashMap<&str, Rc<String>> {
+    var_string
+        .split(':')
+        .map(|var| {
+            let mut t = var.split('=');
+            let k: &str = t.next().unwrap().trim().into();
+            let v: Rc<String> = Rc::new(t.next().unwrap().trim().into());
+            (k, v)
+        })
+        .collect::<HashMap<&str, Rc<String>>>()
+}
+
+fn open_file(file_name: &String) -> BufReader<File> {
+    // does exists in saved boilerplate
+    if let Ok(path) = Path::new(&format!("~/.config/boilerplate/{}", file_name)).canonicalize() {
+        if path.is_file() {
+            return BufReader::new(File::open(path).unwrap());
+        }
+    }
+    // otherwise
+    if let Ok(path) = Path::new(file_name).canonicalize() {
+        if path.is_file() {
+            return BufReader::new(File::open(path).unwrap());
+        }
+    }
+    // Err
+    eprintln!("Error:\n    {file_name} may not exist or have non readable permissions.");
+    std::process::exit(1);
 }
